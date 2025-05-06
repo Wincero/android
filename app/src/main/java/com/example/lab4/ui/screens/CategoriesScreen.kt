@@ -7,20 +7,24 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.lab4.data.PlacesRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lab4.data.model.PlaceCategory
 import com.example.lab4.ui.components.CategoryCard
+import com.example.lab4.ui.viewmodels.CategoriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
-    onCategoryClick: (PlaceCategory) -> Unit
+    onCategoryClick: (PlaceCategory) -> Unit,
+    viewModel: CategoriesViewModel = viewModel()
 ) {
-    val categories = PlacesRepository.getCategories()
+    val categories by viewModel.categories.collectAsState()
 
     Scaffold(
         topBar = {

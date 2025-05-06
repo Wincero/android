@@ -1,59 +1,43 @@
 package com.example.lab4
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lab4.data.PlacesRepository
-import com.example.lab4.data.model.PlaceCategory
-import com.example.lab4.ui.navigation.Screen
 import com.example.lab4.ui.screens.*
+import com.example.lab4.ui.viewmodels.NavigationViewModel
+import com.example.lab4.ui.viewmodels.ScreenState
 
 @Composable
 fun MyCityApp() {
-    val navController = rememberNavController()
+    val navViewModel: NavigationViewModel = viewModel()
+    val currentScreen by navViewModel.currentScreen.collectAsState()
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Categories.route
-    ) {
-        composable(Screen.Categories.route) {
+    when (val screen = currentScreen) {
+        is ScreenState.Categories -> {
             CategoriesScreen(
                 onCategoryClick = { category ->
-                    navController.navigate(Screen.PlacesList.createRoute(category))
+                    navViewModel.navigateToPlacesList(category)
                 }
             )
         }
-        composable(
-            route = Screen.PlacesList.route,
-            arguments = listOf(navArgument("category") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val category = enumValueOf<PlaceCategory>(
-                backStackEntry.arguments?.getString("category")!!
-            )
+        is ScreenState.PlacesList -> {
             PlacesListScreen(
-                category = category,
+                category = screen.category,
                 onPlaceClick = { placeId ->
-                    navController.navigate(Screen.PlaceDetails.createRoute(placeId))
+                    PlacesRepository.getPlaceById(placeId)?.let { place ->
+                        navViewModel.navigateToPlaceDetails(place)
+                    }
                 },
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navViewModel.onBack() }
             )
         }
-        composable(
-            route = Screen.PlaceDetails.route,
-            arguments = listOf(navArgument("placeId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val placeId = backStackEntry.arguments?.getInt("placeId")!!
-            val place = PlacesRepository.getPlaceById(placeId)
-
-            if (place != null) {
-                PlaceDetailsScreen(
-                    place = place,
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
+        is ScreenState.PlaceDetails -> {
+            PlaceDetailsScreen(
+                place = screen.place,
+                onBackClick = { navViewModel.onBack() }
+            )
         }
     }
 }
